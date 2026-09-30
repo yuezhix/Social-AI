@@ -62,7 +62,7 @@ When a post is uploaded, the backend generates a UUID for it. The file is saved 
 
 | Method | Endpoint | Auth | Description |
 | --- | --- | --- | --- |
-| POST | `/signup` | No | Create a user (`username`, `password`) |
+| POST | `/signup` | No | Create a user (`username`, `password`); usernames use lowercase letters and numbers only |
 | POST | `/signin` | No | Return a JWT that expires in 24 hours |
 | POST | `/upload` | Bearer token | Upload a post as multipart form data (`message`, `media_file`) |
 | GET | `/search` | Bearer token | Return all posts |

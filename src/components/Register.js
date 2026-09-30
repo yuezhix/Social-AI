@@ -79,6 +79,10 @@ function Register(props) {
             required: true,
             message: "Please input your Username!",
           },
+          {
+            pattern: /^[a-z0-9]+$/,
+            message: "Use lowercase letters and numbers only.",
+          },
         ]}
       >
         <Input />
