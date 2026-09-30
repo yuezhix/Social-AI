@@ -9,7 +9,7 @@ The frontend is built with React. The backend is a Go service deployed on Google
 - Sign up and sign in with JWT authentication
 - Protected routes: the Create and Collection pages redirect to login when there is no token
 - AI image generation from a text prompt with OpenAI `gpt-image-2`
-- Lightbox preview with zoom, fullscreen and slideshow, and one-click upload of generated images
+- Lightbox preview with zoom, fullscreen, slideshow, and thumbnails, and one-click upload of generated images
 - Image and video upload with a description
 - Collection page with separate Images and Videos tabs
 - Search all posts, posts by a user, or posts whose description matches keywords
@@ -19,10 +19,10 @@ The frontend is built with React. The backend is a Go service deployed on Google
 
 | Area | Technology |
 | --- | --- |
-| Web UI | React 18, React Router 6, Axios, Ant Design, MUI, styled-components |
+| Web UI | React 18, React Router 6, Axios, Ant Design 4, MUI 9, styled-components |
 | Image display | react-photo-album, yet-another-react-lightbox |
 | AI | OpenAI Node SDK (`gpt-image-2`) |
-| Backend | Go, gorilla/mux, go-jwt-middleware, jwt-go |
+| Backend | Go 1.26, gorilla/mux, go-jwt-middleware, jwt-go |
 | Search and storage | Elasticsearch 7 (olivere/elastic), Google Cloud Storage |
 | Deployment | Google App Engine (flexible environment), Google Compute Engine |
 
@@ -119,7 +119,7 @@ cp conf/deploy.example.yml conf/deploy.yml
 
 ```yaml
 elasticsearch:
-  address: "http://<ES_HOST>:9200"
+  address: "http://<ES_VM_INTERNAL_IP>:9200"
   username: "<ES_USERNAME>"
   password: "<ES_PASSWORD>"
 
@@ -163,4 +163,9 @@ Elasticsearch runs on a Compute Engine VM as a systemd service. The App Engine s
 
 ## Current Scope
 
-This is a learning project. Post deletion is not available yet: the frontend has delete buttons, but the delete route is disabled in the backend. The OpenAI API is called from the browser, so the API key is included in the frontend build; image generation should move to the backend before any public deployment. Passwords are stored without hashing, uploaded media is publicly readable, and there are no end-to-end tests.
+This is a learning project. Known limitations:
+
+- Post deletion is not available yet. The frontend has delete buttons, but the delete route is disabled in the backend.
+- The OpenAI API is called from the browser, so the API key is included in the frontend build. Image generation should move to the backend before any public deployment.
+- Passwords are stored without hashing, and uploaded media is publicly readable.
+- There are no end-to-end tests.
