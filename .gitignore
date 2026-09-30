@@ -21,3 +21,10 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# local secrets and config
+.env
+server/conf/deploy.yml
+
+# local outputs
+/output

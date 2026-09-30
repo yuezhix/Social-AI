@@ -1,0 +1,10 @@
+elasticsearch:
+  address: "http://<ES_VM_INTERNAL_IP>:9200"
+  username: "<ES_USERNAME>"
+  password: "<ES_PASSWORD>"
+
+gcs:
+  bucket: "<GCS_BUCKET_NAME>"
+
+token:
+  secret: "<JWT_SIGNING_SECRET>"

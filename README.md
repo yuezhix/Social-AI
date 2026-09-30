@@ -1,70 +1,166 @@
-# Getting Started with Create React App
+# Social AI
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Social AI is an image and video sharing web application with built-in AI image generation. Users sign up, describe an idea in plain words, generate an image with OpenAI, and publish it to a shared collection. They can also upload their own images and videos, and search posts by user or keyword.
 
-## Available Scripts
+The frontend is built with React. The backend is a Go service deployed on Google App Engine. Post data is stored in Elasticsearch running on a Google Compute Engine VM, and media files are stored in Google Cloud Storage.
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+- Sign up and sign in with JWT authentication
+- Protected routes: the Create and Collection pages redirect to login when there is no token
+- AI image generation from a text prompt with OpenAI `gpt-image-2`
+- Lightbox preview with zoom, fullscreen and slideshow, and one-click upload of generated images
+- Image and video upload with a description
+- Collection page with separate Images and Videos tabs
+- Search all posts, posts by a user, or posts whose description matches keywords
+- Media files stored in Google Cloud Storage, post metadata stored in Elasticsearch, linked by the same UUID
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Tech Stack
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+| Area | Technology |
+| --- | --- |
+| Web UI | React 18, React Router 6, Axios, Ant Design, MUI, styled-components |
+| Image display | react-photo-album, yet-another-react-lightbox |
+| AI | OpenAI Node SDK (`gpt-image-2`) |
+| Backend | Go, gorilla/mux, go-jwt-middleware, jwt-go |
+| Search and storage | Elasticsearch 7 (olivere/elastic), Google Cloud Storage |
+| Deployment | Google App Engine (flexible environment), Google Compute Engine |
 
-### `npm test`
+## Architecture
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```
+Browser (React)
+  ├── OpenAI API              prompt → base64 image
+  └── Go service (App Engine) JSON / multipart requests with a Bearer token
+        ├── Elasticsearch (GCE VM)   user and post documents
+        └── Cloud Storage bucket     image and video files
+```
 
-### `npm run build`
+When a post is uploaded, the backend generates a UUID for it. The file is saved to Cloud Storage with the UUID as the object name, and the post document (`id`, `user`, `message`, `url`, `type`) is saved to Elasticsearch with the same UUID as the document ID. The object's public link is stored in `url`, so the frontend can display the media directly.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Project Structure
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+| Path | Responsibility |
+| --- | --- |
+| `src/components/App.js` | Reads the token from local storage and holds the login state. |
+| `src/components/Main.js` | Defines the routes and redirects based on the login state. |
+| `src/components/ResponsiveAppBar.js` | Navigation bar with Create, Collection, and logout. |
+| `src/components/Login.js`, `Register.js` | Sign-in and sign-up forms. |
+| `src/components/Landing.js` | The Create page: generates an image from a prompt, previews it, and uploads it. |
+| `src/components/Collection.js` | Loads posts through search and shows them in Images and Videos tabs. |
+| `src/components/SearchBar.js` | Search by all posts, keyword, or user. |
+| `src/components/PhotoGallery.js` | Image grid and lightbox viewer. |
+| `src/components/CreatePostButton.js`, `PostForm.js` | Upload dialog for local images and videos. |
+| `server/main.go` | Loads the configuration, initializes Elasticsearch and Cloud Storage, and starts the server on port 8080. |
+| `server/handler/` | HTTP routes, JWT middleware, CORS, and request handling. |
+| `server/service/` | Sign-in, sign-up, upload, and search logic. |
+| `server/backend/` | Elasticsearch and Cloud Storage clients. |
+| `server/model/` | `User` and `Post` models. |
+| `server/conf/deploy.example.yml` | Configuration template for the backend. |
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## API
 
-### `npm run eject`
+| Method | Endpoint | Auth | Description |
+| --- | --- | --- | --- |
+| POST | `/signup` | No | Create a user (`username`, `password`) |
+| POST | `/signin` | No | Return a JWT that expires in 24 hours |
+| POST | `/upload` | Bearer token | Upload a post as multipart form data (`message`, `media_file`) |
+| GET | `/search` | Bearer token | Return all posts |
+| GET | `/search?user=...` | Bearer token | Return posts from one user |
+| GET | `/search?keywords=...` | Bearer token | Return posts whose message matches all keywords |
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+The media type is detected from the file extension: `.jpg`, `.jpeg`, `.png`, and `.gif` are images; `.mp4`, `.mov`, `.avi`, `.flv`, and `.wmv` are videos.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Run Locally
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Frontend
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Requirements:
 
-## Learn More
+- Node.js 18 or later
+- An OpenAI API key
+- A running backend
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Install dependencies:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```bash
+npm install
+```
 
-### Code Splitting
+Create `.env` in the project root (see `.env.example`):
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```
+REACT_APP_OPENAI_KEY=your_openai_api_key
+REACT_APP_API_BASE_URL=https://your-backend-url
+```
 
-### Analyzing the Bundle Size
+Start the development server:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```bash
+npm start
+```
 
-### Making a Progressive Web App
+Open http://localhost:3000.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### Backend
 
-### Advanced Configuration
+Requirements:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- Go (see `server/go.mod`)
+- An Elasticsearch 7 instance with basic authentication
+- A Cloud Storage bucket, and Google Cloud credentials that can write to it
 
-### Deployment
+Copy the configuration template and fill in your own values:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```bash
+cd server
+cp conf/deploy.example.yml conf/deploy.yml
+```
 
-### `npm run build` fails to minify
+```yaml
+elasticsearch:
+  address: "http://<ES_HOST>:9200"
+  username: "<ES_USERNAME>"
+  password: "<ES_PASSWORD>"
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+gcs:
+  bucket: "<GCS_BUCKET_NAME>"
+
+token:
+  secret: "<JWT_SIGNING_SECRET>"
+```
+
+Run the server:
+
+```bash
+go run .
+```
+
+On startup, the server creates the `user` and `post` indexes in Elasticsearch if they do not exist.
+
+## Deployment
+
+The backend is deployed to the App Engine flexible environment with `server/app.yaml`:
+
+```bash
+cd server
+gcloud app deploy
+```
+
+Elasticsearch runs on a Compute Engine VM as a systemd service. The App Engine service joins the `default` VPC network, so it reaches Elasticsearch through the VM's internal IP address.
+
+## Configuration
+
+| Name | Where | Description |
+| --- | --- | --- |
+| `REACT_APP_OPENAI_KEY` | `.env` | OpenAI API key for image generation |
+| `REACT_APP_API_BASE_URL` | `.env` | Backend URL |
+| `elasticsearch.*` | `server/conf/deploy.yml` | Elasticsearch address and credentials |
+| `gcs.bucket` | `server/conf/deploy.yml` | Cloud Storage bucket for media files |
+| `token.secret` | `server/conf/deploy.yml` | Secret used to sign JWTs |
+
+`.env` and `server/conf/deploy.yml` are ignored by Git.
+
+## Current Scope
+
+This is a learning project. Post deletion is not available yet: the frontend has delete buttons, but the delete route is disabled in the backend. The OpenAI API is called from the browser, so the API key is included in the frontend build; image generation should move to the backend before any public deployment. Passwords are stored without hashing, uploaded media is publicly readable, and there are no end-to-end tests.
