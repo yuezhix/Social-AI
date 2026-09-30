@@ -160,12 +160,3 @@ Elasticsearch runs on a Compute Engine VM as a systemd service. The App Engine s
 | `token.secret` | `server/conf/deploy.yml` | Secret used to sign JWTs |
 
 `.env` and `server/conf/deploy.yml` are ignored by Git.
-
-## Current Scope
-
-This is a learning project. Known limitations:
-
-- Post deletion is not available yet. The frontend has delete buttons, but the delete route is disabled in the backend.
-- The OpenAI API is called from the browser, so the API key is included in the frontend build. Image generation should move to the backend before any public deployment.
-- Passwords are stored without hashing, and uploaded media is publicly readable.
-- There are no end-to-end tests.
